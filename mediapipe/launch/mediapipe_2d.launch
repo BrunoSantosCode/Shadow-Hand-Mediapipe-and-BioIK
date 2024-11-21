@@ -1,0 +1,9 @@
+<launch>
+    <!-- Node -->
+    <node name="mediapipe_2d" pkg="mediapipe" type="mediapipe_2d.py" output="screen">
+
+        <!-- ROS Topic Parameters -->
+        <param name="image_topic" value="/zed/left_image" />
+        <param name="keypoints_topic" value="/hand_keypoints" />
+    </node>
+</launch>

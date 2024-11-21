@@ -1,0 +1,12 @@
+<launch>
+    <!-- Node -->
+    <node name="zed_cpp" pkg="image" type="zed_cpp" output="screen">
+
+        <!-- Camera Parameters -->
+        <param name="camera_resolution" value="HD720" /> <!-- Choose between: VGA, HD720, HD1080, HD2K-->
+        <param name="depth_mode" value="PERFORMANCE" /> <!-- Choose between: PERFORMANCE, QUALITY, ULTRA, NEURAL-->
+        <!-- ROS Topic Parameters -->
+        <param name="left_image_topic" value="/zed/left_image" />
+        <param name="right_image_topic" value="/zed/right_image" />
+    </node>
+</launch>
