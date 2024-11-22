@@ -2,6 +2,9 @@
     <!-- Node -->
     <node name="mediapipe_2d" pkg="mediapipe" type="mediapipe_2d.py" output="screen">
 
+        <!-- Distance between Wrist and Index Finger MCP Parameter (for hand scale) -->
+        <param name="wrist_if_mcp_topic" value="0.10" />
+
         <!-- ROS Topic Parameters -->
         <param name="image_topic" value="/zed/left_image" />
         <param name="keypoints_topic" value="/hand_keypoints" />

@@ -1,0 +1,9 @@
+<launch>
+    <!-- Node -->
+    <node name="hand_keypoints_visualizer" pkg="mediapipe" type="hand_keypoints_visualizer.py" output="screen">
+
+        <!-- ROS Topic Parameters -->
+        <param name="keypoints_topic" value="/hand_keypoints" />
+        <param name="rviz_topic" value="/hand_keypoints_rviz" />
+    </node>
+</launch>

@@ -1,0 +1,5 @@
+<launch>
+    <!-- Node -->
+    <node name="bio_ik_node" pkg="bio_ik_solver" type="bio_ik_node" output="screen">
+    </node>
+</launch>

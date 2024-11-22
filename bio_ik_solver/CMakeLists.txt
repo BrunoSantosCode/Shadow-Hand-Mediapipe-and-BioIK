@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(image)
+project(bio_ik_solver)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -11,19 +11,18 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  sensor_msgs
-  cv_bridge
-  image_transport
-  nodelet
+  bio_ik
+  geometry_msgs
+  Eigen3
+  messages
+  moveit_core
+  moveit_ros_move_group
+  moveit_ros_planning
+  moveit_ros_planning_interface
 )
 
-# ZED SDK Paths
-# set(ZED_DIR /usr/local/zed)
-# set(CUDA_DIR /usr/local/cuda)
-
 ## System dependencies are found with CMake's conventions
-find_package(OpenCV REQUIRED)
-find_package(ZED REQUIRED)
+# find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -112,10 +111,10 @@ find_package(ZED REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES image
-   CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs cv_bridge image_transport zed_nodelets
-   DEPENDS OpenCV ZED
+  INCLUDE_DIRS include
+  LIBRARIES bio_ik_solver
+  CATKIN_DEPENDS roscpp rospy std_msgs messages moveit_core moveit_ros_planning  
+# DEPENDS system_lib
 )
 
 ###########
@@ -127,14 +126,12 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${CUDA_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
-  ${ZED_INCLUDE_DIRS}
+  $ENV{EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/image.cpp
+#   src/${PROJECT_NAME}/bio_ik_solver.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -145,8 +142,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(zed_cpp src/zed_cpp.cpp)
-add_executable(webcam_cpp src/webcam_cpp.cpp)
+add_executable(bio_ik_node src/bio_ik.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -156,18 +152,12 @@ add_executable(webcam_cpp src/webcam_cpp.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(bio_ik_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(zed_cpp
+target_link_libraries(bio_ik_node
   ${catkin_LIBRARIES}
-  ${CUDA_INCLUDE_DIRS}
-  ${OpenCV_LIBRARIES}
-  ${ZED_LIBRARIES}
-)
-target_link_libraries(webcam_cpp
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
+  Eigen3::Eigen
 )
 
 #############
@@ -186,12 +176,9 @@ target_link_libraries(webcam_cpp
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS zed_cpp
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-install(TARGETS webcam_cpp
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS ${PROJECT_NAME}_node
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
@@ -220,7 +207,7 @@ install(TARGETS webcam_cpp
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_image.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_bio_ik_solver.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

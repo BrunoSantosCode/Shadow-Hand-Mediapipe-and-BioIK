@@ -1,0 +1,10 @@
+<launch>
+    <!-- Node -->
+    <node name="webcam_py" pkg="image" type="webcam_py.py" output="screen">
+
+        <!-- Camera Parameters -->
+        <param name="camera_resolution" value="SD" /> <!-- Choose between: SD, HD720, HD1080 -->
+        <!-- ROS Topic Parameters -->
+        <param name="image_topic" value="/zed/left_image" />
+    </node>
+</launch>
