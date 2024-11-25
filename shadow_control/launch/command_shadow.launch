@@ -1,0 +1,8 @@
+<launch>
+    <!-- Node -->
+    <node name="command_shadow" pkg="shadow_control" type="command_shadow.py" output="screen">
+
+    <!-- ROS Topic Parameters -->
+        <param name="joints_topic" value="/shadow_joints" />
+    </node>
+</launch>

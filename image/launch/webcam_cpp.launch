@@ -1,10 +1,15 @@
 <launch>
+    <!-- Camera Parameters -->
+    <arg name="camera_id" default="0" />
+    <arg name="camera_resolution" default="SD" /> <!-- Choose between: SD, HD720, HD1080 -->
+    <!-- ROS Topic Parameters -->
+    <arg name="image_topic" default="/zed/left_image" />
+
     <!-- Node -->
     <node name="webcam_cpp" pkg="image" type="webcam_cpp" output="screen">
-
-        <!-- Camera Parameters -->
-        <param name="camera_resolution" value="SD" /> <!-- Choose between: SD, HD720, HD1080 -->
-        <!-- ROS Topic Parameters -->
-        <param name="image_topic" value="/zed/left_image" />
+        <!-- Set Parameters -->
+        <param name="camera_id" value="$(arg camera_id)" />
+        <param name="camera_resolution" value="$(arg camera_resolution)" />
+        <param name="image_topic" value="$(arg image_topic)" />
     </node>
 </launch>

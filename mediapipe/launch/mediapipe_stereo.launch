@@ -1,0 +1,12 @@
+<launch>
+    <!-- Node -->
+    <node name="mediapipe_stereo" pkg="mediapipe" type="mediapipe_stereo.py" output="screen">
+
+        <!-- Distance between Wrist and Index Finger MCP Parameter (for hand scale) -->
+        <param name="wrist_if_mcp_topic" value="0.10" />
+
+        <!-- ROS Topic Parameters -->
+        <param name="image_topic" value="/zed/stereo_image" />
+        <param name="keypoints_topic" value="/hand_keypoints" />
+    </node>
+</launch>

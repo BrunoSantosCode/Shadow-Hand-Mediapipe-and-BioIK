@@ -10,19 +10,21 @@ int main(int argc, char** argv)
     ros::NodeHandle nh("~");
 
     // Get ROS parameters
-    std::string resolution_param;
-    std::string image_topic;
-    nh.param("camera_resolution", resolution_param, std::string("SD"));
-    nh.param("image_topic", image_topic, std::string("/zed/left_image"));
+    int camID;
+    std::string camResolution;
+    std::string imgTopic;
+    nh.param("camera_id", camID, 0);
+    nh.param("camera_resolution", camResolution, std::string("SD"));
+    nh.param("image_topic", imgTopic, std::string("/zed/left_image"));
 
     // Create ROS Publisher
-    ros::Publisher imagePub = nh.advertise<sensor_msgs::Image>(image_topic, 1);
+    ros::Publisher imagePub = nh.advertise<sensor_msgs::Image>(imgTopic, 1);
 
     // Create a CvBridge object to convert OpenCV images to ROS Image messages
     cv_bridge::CvImage bridge;
 
     // Open Webcam
-    cv::VideoCapture cap(2);
+    cv::VideoCapture cap(camID);
     if (!cap.isOpened())
     {
         ROS_ERROR("Error: Couldn't open webcam.");
@@ -30,11 +32,11 @@ int main(int argc, char** argv)
     }
 
     // Set Webcam resolution based on parameter
-    if (resolution_param == "HD1080"){
+    if (camResolution == "HD1080"){
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
     }
-    else if (resolution_param == "HD720"){
+    else if (camResolution == "HD720"){
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
     }
@@ -62,9 +64,6 @@ int main(int argc, char** argv)
 
         // Publish to ROS
         imagePub.publish(rosImage);
-
-        // Display the frame in a window (optional)
-        cv::imshow("Webcam", frame);
     }
 
     // Release the webcam and close OpenCV windows

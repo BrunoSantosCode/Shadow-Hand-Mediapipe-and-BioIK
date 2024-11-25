@@ -10,26 +10,27 @@ def webcam():
     rospy.init_node('webcam_py')
 
     # Get ROS Parameters
-    resolution_param = rospy.get_param('~camera_resolution', 'SD')
-    image_topic = rospy.get_param('~image_topic', '/zed/left_image')
+    camID = rospy.get_param('~camera_id', 0)
+    camResolution = rospy.get_param('~camera_resolution', 'SD')
+    imgTopic = rospy.get_param('~image_topic', '/zed/left_image')
 
     # Create ROS Publisher
-    imagePub = rospy.Publisher(image_topic, Image, queue_size=1)
+    imagePub = rospy.Publisher(imgTopic, Image, queue_size=1)
 
     # Create a CvBridge object to convert OpenCV images to ROS Image messages
     bridge = CvBridge()
 
     # Open Webcam
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(camID)
     if not cap.isOpened():
         print("Error: Couldn't open webcam.")
         exit()
 
     # Set Webcam resolution
-    if resolution_param == 'HD1080':
+    if camResolution == 'HD1080':
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-    elif resolution_param == 'HD720':
+    elif camResolution == 'HD720':
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     else:

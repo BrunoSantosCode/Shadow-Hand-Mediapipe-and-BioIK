@@ -12,11 +12,12 @@ int main(int argc, char** argv) {
 
     // Get ROS Parameters
     std::string resolution_param, depth_mode_param;
-    std::string left_topic_param, right_topic_param;
+    std::string left_topic_param, right_topic_param, stereo_topic_param;
     nh.param<std::string>("camera_resolution", resolution_param, "HD720");
     nh.param<std::string>("depth_mode", depth_mode_param, "PERFORMANCE");
     nh.param<std::string>("left_image_topic", left_topic_param, "/zed/left_image");
     nh.param<std::string>("right_image_topic", right_topic_param, "/zed/right_image");
+    nh.param<std::string>("stereo_image_topic", stereo_topic_param, "/zed/stereo_image");
 
     // Map resolution parameter to ZED SDK resolution
     sl::RESOLUTION camera_resolution;
@@ -45,6 +46,7 @@ int main(int argc, char** argv) {
     // Create ROS Publishers
     ros::Publisher leftImagePub = nh.advertise<sensor_msgs::Image>(left_topic_param, 1);
     ros::Publisher rightImagePub = nh.advertise<sensor_msgs::Image>(right_topic_param, 1);
+    ros::Publisher stereoImagePub = nh.advertise<sensor_msgs::Image>(stereo_topic_param, 1);
 
     // Create ZED camera object
     sl::Camera zed;
@@ -66,12 +68,13 @@ int main(int argc, char** argv) {
 
     // ZED image variables
     sl::Mat leftImage, rightImage;
-    cv::Mat cvLeftImage, cvRightImage;
+    cv::Mat cvLeftImage, cvRightImage, cvStereoImage;
 
     // ROS message converter
-    cv_bridge::CvImage leftBridge, rightBridge;
+    cv_bridge::CvImage leftBridge, rightBridge, stereoBridge;
     leftBridge.encoding = "bgr8";
     rightBridge.encoding = "bgr8";
+    stereoBridge.encoding = "bgr8";
 
     while (ros::ok()) {
 
@@ -87,16 +90,20 @@ int main(int argc, char** argv) {
             cv::cvtColor(cvLeftImage, cvLeftImage, cv::COLOR_BGRA2BGR);
             cvRightImage = cv::Mat(rightImage.getHeight(), rightImage.getWidth(), CV_8UC4, rightImage.getPtr<sl::uchar1>(sl::MEM::CPU));
             cv::cvtColor(cvRightImage, cvRightImage, cv::COLOR_BGRA2BGR);
+            cv::hconcat(cvLeftImage, cvRightImage, cvStereoImage);
 
             // Convert to ROS
             leftBridge.image = cvLeftImage;
             rightBridge.image = cvRightImage;
+            stereoBridge.image = cvStereoImage;
             sensor_msgs::ImagePtr rosLeftImage = leftBridge.toImageMsg();
             sensor_msgs::ImagePtr rosRightImage = rightBridge.toImageMsg();
+            sensor_msgs::ImagePtr rosStereoImage = stereoBridge.toImageMsg();
 
             // Publish to ROS
             leftImagePub.publish(rosLeftImage);
             rightImagePub.publish(rosRightImage);
+            stereoImagePub.publish(rosStereoImage);
         }
     }
 

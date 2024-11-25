@@ -1,12 +1,19 @@
 <launch>
+    <!-- Camera Parameters -->
+    <arg name="camera_resolution" default="HD720" /> <!-- Choose between: VGA, HD720, HD1080, HD2K-->
+    <arg name="depth_mode" default="PERFORMANCE" /> <!-- Choose between: PERFORMANCE, QUALITY, ULTRA, NEURAL-->
+    <!-- ROS Topic Parameters -->
+    <arg name="left_image_topic" default="/zed/left_image" />
+    <arg name="right_image_topic" default="/zed/right_image" />
+    <arg name="stereo_image_topic" default="/zed/stereo_image" />
+
     <!-- Node -->
     <node name="zed_py" pkg="image" type="zed_py.py" output="screen">
-
-        <!-- Camera Parameters -->
-        <param name="camera_resolution" value="HD720" /> <!-- Choose between: VGA, HD720, HD1080, HD2K-->
-        <param name="depth_mode" value="PERFORMANCE" /> <!-- Choose between: PERFORMANCE, QUALITY, ULTRA, NEURAL-->
-        <!-- ROS Topic Parameters -->
-        <param name="left_image_topic" value="/zed/left_image" />
-        <param name="right_image_topic" value="/zed/right_image" />
+        <!-- Set Parameters -->
+        <param name="camera_resolution" value="$(arg camera_resolution)" />
+        <param name="depth_mode" value="$(arg depth_mode)" />
+        <param name="left_image_topic" value="$(arg left_image_topic)" />
+        <param name="right_image_topic" value="$(arg right_image_topic)" />
+        <param name="stereo_image_topic" value="$(arg stereo_image_topic)" />
     </node>
 </launch>
