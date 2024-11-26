@@ -1,8 +1,10 @@
 <launch>
+    <!-- ROS Topic Parameter -->
+    <arg name="joints_topic" default="/shadow_joints" />
+
     <!-- Node -->
     <node name="command_shadow" pkg="shadow_control" type="command_shadow.py" output="screen">
-
-    <!-- ROS Topic Parameters -->
-        <param name="joints_topic" value="/shadow_joints" />
+        <!-- Set Parameter -->
+        <param name="joints_topic" value="$(arg joints_topic)" />
     </node>
 </launch>

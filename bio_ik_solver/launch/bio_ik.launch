@@ -1,9 +1,12 @@
 <launch>
+    <!-- ROS Topic Parameters -->
+    <arg name="keypoints_topic" default="/hand_keypoints" />
+    <arg name="joints_topic" default="/shadow_joints" />
+
     <!-- Node -->
     <node name="bio_ik_node" pkg="bio_ik_solver" type="bio_ik_node" output="screen">
-
-    <!-- ROS Topic Parameters -->
-        <param name="keypoints_topic" value="/hand_keypoints" />
-        <param name="joints_topic" value="/shadow_joints" />
+        <!-- Set Parameters -->
+        <param name="keypoints_topic" value="$(arg keypoints_topic)" />
+        <param name="joints_topic" value="$(arg joints_topic)" />
     </node>
 </launch>
