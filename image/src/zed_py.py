@@ -11,7 +11,7 @@ def zed():
     rospy.init_node('zed_py')
 
     # Get ROS Parameters
-    resolution_param = rospy.get_param('~camera_resolution', 'HD720')
+    resolution_param = rospy.get_param('~camera_resolution', 'HD')
     depth_mode_param = rospy.get_param('~depth_mode', 'PERFORMANCE')
     left_topic = rospy.get_param('~left_image_topic', '/zed/left_image')
     right_topic = rospy.get_param('~right_image_topic', '/zed/right_image')
@@ -20,9 +20,9 @@ def zed():
     # Map resolution parameter to ZED SDK resolution
     if resolution_param == 'VGA':
         camera_resolution = sl.RESOLUTION.VGA
-    elif resolution_param == 'HD720':
+    elif resolution_param == 'HD':
         camera_resolution = sl.RESOLUTION.HD720
-    elif resolution_param == 'HD1080':
+    elif resolution_param == 'FHD':
         camera_resolution = sl.RESOLUTION.HD1080
     else:
         camera_resolution = sl.RESOLUTION.HD2K

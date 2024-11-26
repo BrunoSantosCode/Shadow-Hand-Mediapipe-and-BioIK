@@ -1,7 +1,7 @@
 <launch>
     <!-- Camera Parameters -->
     <arg name="camera_id" default="0" />
-    <arg name="camera_resolution" default="SD" /> <!-- Choose between: SD, HD720, HD1080 -->
+    <arg name="camera_resolution" default="SD" /> <!-- Choose between: SD, HD, FHD -->
     <!-- ROS Topic Parameters -->
     <arg name="image_topic" default="/zed/left_image" />
 

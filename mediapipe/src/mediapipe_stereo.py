@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
+import os
 import cv2
 import rospy
+import rospkg
 import numpy as np
+import configparser
 import mediapipe as mp
+from termcolor import colored
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point
@@ -13,8 +17,127 @@ from std_msgs.msg import Header
 mp_hands = None
 mp_drawing = None
 detect_hands = None
+camera_params = None
+camera_resolution = None
 wrist_if_mcp_dist = None
 keypointsPublisher = None
+
+def load_camera_params(config_file, resolution):
+    """
+    Load camera parameters for the specified resolution
+    Args:
+        config_file: Path to the .conf file
+        resolution: Camera resolution as a string ('VGA', 'HD', 'FHD' or '2K')
+    Returns:
+        Dictionary with intrinsic and extrinsic parameters for left and right cameras
+    """
+    # Check if Config File Exists and is Readable
+    if not os.path.exists(config_file):
+        print(f"Error: Config file '{config_file}' not found.")
+        return None
+    if not os.access(config_file, os.R_OK):
+        print(f"Error: Config file '{config_file}' is not readable.")
+        return None
+
+    # Load Config File
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    # Build and Check Resolution-specific Keys
+    left_key = f"LEFT_CAM_{resolution}"
+    right_key = f"RIGHT_CAM_{resolution}"
+    if not config.has_section(left_key):
+        raise KeyError(f"Section '{left_key}' not found in config file.")
+    if not config.has_section(right_key):
+        raise KeyError(f"Section '{right_key}' not found in config file.")
+    
+    # Extract Camera Parameters for Specified Resolution
+    params = {
+        'left': {
+            'fx': float(config[left_key]['fx']),
+            'fy': float(config[left_key]['fy']),
+            'cx': float(config[left_key]['cx']),
+            'cy': float(config[left_key]['cy']),
+            'k1': float(config[left_key]['k1']),
+            'k2': float(config[left_key]['k2']),
+            'p1': float(config[left_key]['p1']),
+            'p2': float(config[left_key]['p2']),
+            'k3': float(config[left_key]['k3'])
+        },
+        'right': {
+            'fx': float(config[right_key]['fx']),
+            'fy': float(config[right_key]['fy']),
+            'cx': float(config[right_key]['cx']),
+            'cy': float(config[right_key]['cy']),
+            'k1': float(config[right_key]['k1']),
+            'k2': float(config[right_key]['k2']),
+            'p1': float(config[right_key]['p1']),
+            'p2': float(config[right_key]['p2']),
+            'k3': float(config[right_key]['k3'])
+        },
+        'stereo': {
+            'baseline': float(config['STEREO']['Baseline']),
+            'ty': float(config['STEREO']['TY']),
+            'tz': float(config['STEREO']['TZ'])
+        }
+    }
+    return params
+
+def run_mediapipe(image, detector):
+    """
+    Extract hand keypoints using MediaPipe.
+    Args:
+        image: Input image for MediaPipe processing
+        detector: Initialized MediaPipe hands detector
+    Returns:
+        List of detected keypoints as Point messages
+    """
+    imageRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    height, width, _ = imageRGB.shape
+    results = detector.process(imageRGB)
+    keypoints = []
+    # Extract Mediapipe Hand Keypoints
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            for landmark in hand_landmarks.landmark:
+                keypoints.append(Point(x=landmark.x*width, 
+                                       y=landmark.y*height, 
+                                       z=0))
+            # Draw Hand Keypoints
+            mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+        return keypoints, image
+    return None, image
+
+def compute_3d_coordinates(left_keypoints, right_keypoints, camera_params):
+    """
+    Compute 3D coordinates from stereo keypoints
+    Args:
+        left_keypoints: List of keypoints from the left image
+        right_keypoints: List of keypoints from the right image
+        camera_params: Dictionary containing 'baseline', 'left' and 'right' camera intrinsic parameters
+    Returns:
+        3D keypoints as a list of Point messages
+    """
+
+    baseline = camera_params['stereo']['baseline']
+    fx = camera_params['left']['fx']
+    fy = camera_params['left']['fy']
+    cx = camera_params['left']['cx']
+    cy = camera_params['left']['cy']
+    
+    keypoints_3d = []
+    for left, right in zip(left_keypoints, right_keypoints):
+        disparity = left.x - right.x
+        if disparity <= 0:
+            print(colored('ERROR: Invalid disparity calculation!', 'red'))
+            return None
+        Z = (fx * baseline) / disparity
+        X = ((left.x - cx) * Z) / fx
+        Y = ((left.y - cy) * Z) / fy
+        keypoints_3d.append(Point(x=X, y=Y, z=Z))
+    
+    return keypoints_3d
 
 def transform_keypoints(keypoints):
     """
@@ -29,6 +152,8 @@ def transform_keypoints(keypoints):
     """
 
     global wrist_if_mcp_dist
+
+    print(Keypoints)
 
     wrist = keypoints[0]
 
@@ -72,7 +197,7 @@ def transform_keypoints(keypoints):
     return transformed_keypoints
 
 def image_callback(msg):
-    global mp_hands, detect_hands, mp_drawing, keypointsPublisher
+    global mp_hands, detect_hands, mp_drawing, camera_params, keypointsPublisher
 
     # Convert image to OpenCV
     bridge = CvBridge()
@@ -84,35 +209,30 @@ def image_callback(msg):
     cvLeftImage = cvImage[:, :singleImageWidth]
     cvRightImage = cvImage[:, singleImageWidth:]
 
-    # # Mediapipe
-    # imgRGB = cv2.cvtColor(cvImage, cv2.COLOR_BGR2RGB)
-    # result = detect_hands.process(imgRGB)
+    # Mediapipe
+    leftKeypoints, cvLeftImage = run_mediapipe(cvLeftImage, detect_hands)
+    rightKeypoints, cvRightImage = run_mediapipe(cvRightImage, detect_hands)
 
-    # # Prepare the custom message
-    # handKeypointsMsg = HandKeypoints()
-    # handKeypointsMsg.header = Header()
-    # handKeypointsMsg.header.stamp = rospy.Time.now()
+    # If Hand Keypoints Detected
+    if leftKeypoints and rightKeypoints and len(leftKeypoints) == len(rightKeypoints):
+        
+        # Compute 3D Keypoints
+        keypoints = compute_3d_coordinates(leftKeypoints, rightKeypoints, camera_params)
 
-    # # Extract and Display Mediapipe Hand Keypoints
-    # if result.multi_hand_landmarks:
-    #     for hand_landmarks in result.multi_hand_landmarks:
-    #         keypoints = []
-    #         for landmark in hand_landmarks.landmark:
-    #             point = Point()
-    #             point.x = landmark.x
-    #             point.y = landmark.y
-    #             point.z = landmark.z
-    #             keypoints.append(point)
-            
-    #         # Reorient Keypoints
-    #         newKeypoints = transform_keypoints(keypoints) 
-    #         handKeypointsMsg.keypoints = newKeypoints
+        # Check 3D Keypoints
+        if keypoints:
 
-    #         # Publish Hand Keypoints
-    #         keypointsPublisher.publish(handKeypointsMsg)
+            # Prepare the custom message
+            handKeypointsMsg = HandKeypoints()
+            handKeypointsMsg.header = Header()
+            handKeypointsMsg.header.stamp = rospy.Time.now()
+                    
+            # Reorient Keypoints
+            newKeypoints = transform_keypoints(keypoints) 
+            handKeypointsMsg.keypoints = newKeypoints
 
-    #         # Draw Hand Keypoints
-    #         mp_drawing.draw_landmarks(cvImage, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            # Publish Hand Keypoints
+            keypointsPublisher.publish(handKeypointsMsg)
 
     # Display the image using OpenCV
     cv2.imshow("Left Image", cvLeftImage)
@@ -126,15 +246,23 @@ def image_callback(msg):
         return
 
 def main():
-    global mp_hands, detect_hands, mp_drawing, keypointsPublisher, wrist_if_mcp_dist
+    global mp_hands, detect_hands, mp_drawing
+    global keypointsPublisher, camera_resolution, wrist_if_mcp_dist
+    global camera_params
 
     # Init ROS
     rospy.init_node('zed_left_image_subscriber', anonymous=True)
 
     # Get ROS Parameters
+    camera_resolution = rospy.get_param('~camera_resolution', 'HD')
     wrist_if_mcp_dist = rospy.get_param('~wrist_if_mcp_topic', '0.10')
     image_topic = rospy.get_param('~image_topic', '/zed/stereo_image')
     keypoints_topic = rospy.get_param('~keypoints_topic', '/hand_keypoints')
+
+    # Load Camera Parameters
+    package_path = rospkg.RosPack().get_path('mediapipe')
+    config_file = package_path + '/conf/camera.conf'
+    camera_params = load_camera_params(config_file, camera_resolution)
 
     # Init Mediapipe
     mp_hands = mp.solutions.hands
@@ -145,7 +273,7 @@ def main():
     rospy.Subscriber(image_topic, Image, image_callback)
 
     # Create ROS Publisher
-    keypointsPublisher = rospy.Publisher(keypoints_topic, HandKeypoints, queue_size=10)
+    keypointsPublisher = rospy.Publisher(keypoints_topic, HandKeypoints, queue_size=1)
 
     # Spin
     rospy.spin()

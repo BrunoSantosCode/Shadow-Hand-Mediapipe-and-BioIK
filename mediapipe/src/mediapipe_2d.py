@@ -138,7 +138,7 @@ def main():
     rospy.Subscriber(image_topic, Image, image_callback)
 
     # Create ROS Publisher
-    keypointsPublisher = rospy.Publisher(keypoints_topic, HandKeypoints, queue_size=10)
+    keypointsPublisher = rospy.Publisher(keypoints_topic, HandKeypoints, queue_size=1)
 
     # Spin
     rospy.spin()

@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     // Get ROS Parameters
     std::string resolution_param, depth_mode_param;
     std::string left_topic_param, right_topic_param, stereo_topic_param;
-    nh.param<std::string>("camera_resolution", resolution_param, "HD720");
+    nh.param<std::string>("camera_resolution", resolution_param, "HD");
     nh.param<std::string>("depth_mode", depth_mode_param, "PERFORMANCE");
     nh.param<std::string>("left_image_topic", left_topic_param, "/zed/left_image");
     nh.param<std::string>("right_image_topic", right_topic_param, "/zed/right_image");
@@ -23,9 +23,9 @@ int main(int argc, char** argv) {
     sl::RESOLUTION camera_resolution;
     if (resolution_param == "VGA") {
         camera_resolution = sl::RESOLUTION::VGA;
-    } else if (resolution_param == "HD720") {
+    } else if (resolution_param == "HD") {
         camera_resolution = sl::RESOLUTION::HD720;
-    } else if (resolution_param == "HD1080") {
+    } else if (resolution_param == "FHD") {
         camera_resolution = sl::RESOLUTION::HD1080;
     } else {
         camera_resolution = sl::RESOLUTION::HD2K;

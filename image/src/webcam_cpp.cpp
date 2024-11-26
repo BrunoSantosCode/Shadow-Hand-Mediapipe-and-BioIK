@@ -32,11 +32,11 @@ int main(int argc, char** argv)
     }
 
     // Set Webcam resolution based on parameter
-    if (camResolution == "HD1080"){
+    if (camResolution == "FHD"){
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
     }
-    else if (camResolution == "HD720"){
+    else if (camResolution == "HD"){
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
     }
@@ -60,6 +60,7 @@ int main(int argc, char** argv)
 
         // Convert to ROS
         bridge.image = frame;
+        bridge.encoding = "bgr8";
         sensor_msgs::ImagePtr rosImage = bridge.toImageMsg();
 
         // Publish to ROS
