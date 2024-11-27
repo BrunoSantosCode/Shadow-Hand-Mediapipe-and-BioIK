@@ -4,12 +4,13 @@ import rospy
 from messages.msg import HandKeypoints 
 from visualization_msgs.msg import Marker, MarkerArray
 
+human = True
 rvizPublisher = None
 
 # Keypoint Connections
 CONNECTIONS = [
     [0, 1, 2, 3, 4],      # Thumb
-    [0, 5, 6, 7, 8],         # Index finger
+    [0, 5, 6, 7, 8],      # Index finger
     [9, 10, 11, 12],      # Middle finger
     [13, 14, 15, 16],     # Ring finger
     [0, 17, 18, 19, 20],  # Pinky
@@ -19,9 +20,9 @@ CONNECTIONS = [
 def create_marker(marker_id, ns, marker_type, points, color, scale):
     """
     Helper function to create a Marker message.
-    """
+    """    
     marker = Marker()
-    marker.header.frame_id = "rh_palm"
+    marker.header.frame_id = "rh_wrist"
     marker.header.stamp = rospy.Time.now()
     marker.ns = ns
     marker.id = marker_id
@@ -49,9 +50,16 @@ def hand_keypoints_callback(msg):
     Callback function to handle incoming hand keypoints messages.
     """
 
-    global rvizPublisher
+    global rvizPublisher, human
 
     marker_array = MarkerArray()
+
+    # Set Markers Color
+    sphereColor = (1.0, 0.0, 0.0, 1.0) # Red
+    lineColor = (1.0, 1.0, 1.0, 1.0)  # White
+    if not human:
+        sphereColor = (1.0, 1.0, 1.0, 1.0) # White
+        lineColor = (0.0, 0.0, 0.0, 1.0) # Black
 
     # Add Keypoints
     for i, keypoint in enumerate(msg.keypoints):
@@ -60,8 +68,8 @@ def hand_keypoints_callback(msg):
             ns="keypoints",
             marker_type=Marker.SPHERE,
             points=keypoint,
-            color=(1.0, 0.0, 0.0, 1.0),  # Red
-            scale=(0.012, 0.012, 0.012)     # Sphere size
+            color=sphereColor,
+            scale=(0.012, 0.012, 0.012) # Sphere size
         )
         marker_array.markers.append(sphere_marker)
 
@@ -74,7 +82,7 @@ def hand_keypoints_callback(msg):
             ns="connections",
             marker_type=Marker.LINE_STRIP,
             points=line_points,
-            color=(1.0, 1.0, 1.0, 1.0),  # White
+            color=lineColor,
             scale=(0.005, 0.0, 0.0)      # Line width
         )
         marker_array.markers.append(line_marker)
@@ -86,20 +94,24 @@ def hand_keypoints_callback(msg):
 
 def main():
     
-    global rvizPublisher
+    global rvizPublisher, human
 
     # Init ROS
     rospy.init_node("hand_keypoints_visualizer")
 
     # Get ROS Parameters
-    keypoints_topic = rospy.get_param('~keypoints_topic', '/hand_keypoints')
-    rviz_topic = rospy.get_param('~rviz_topic', '/hand_keypoints_rviz')
+    human = rospy.get_param('~human', 'True')
 
-    # Subscriber to hand keypoints
-    rospy.Subscriber(keypoints_topic, HandKeypoints, hand_keypoints_callback)
-
-    # Publisher for visualization markers
-    rvizPublisher = rospy.Publisher(rviz_topic, MarkerArray, queue_size=1)
+    if human:
+        # Subscriber to Human Hand Keypoints
+        rospy.Subscriber('/human_hand_keypoints', HandKeypoints, hand_keypoints_callback)
+        # Publisher for Visualization Markers
+        rvizPublisher = rospy.Publisher('/human_hand_keypoints_rviz', MarkerArray, queue_size=1)
+    else:
+        # Subscriber to Shadow Hand Keypoints
+        rospy.Subscriber('/shadow_hand_keypoints', HandKeypoints, hand_keypoints_callback)
+        # Publisher for Visualization Markers
+        rvizPublisher = rospy.Publisher('/shadow_hand_keypoints_rviz', MarkerArray, queue_size=1)
 
     rospy.spin()
 

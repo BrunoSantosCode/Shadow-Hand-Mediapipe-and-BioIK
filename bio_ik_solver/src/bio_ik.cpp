@@ -40,7 +40,7 @@ void bio_ik_solver()
         mutex_kp.unlock();
         
         // Map Keypoints to Shadow Hand dimensions
-        mean_kp = mapShadowHand(mean_kp);     
+        //mean_kp = mapShadowHand(mean_kp);     
 
         // DEBUG
         if (false){
@@ -312,9 +312,9 @@ int main(int argc, char **argv)
     time_begin = ros::Time::now();
 
     // Get ROS parameters
-    std::string keypoints_topic;
+    std::string human;
     std::string joints_topic;
-    nh.param("keypoints_topic", keypoints_topic, std::string("/hand_keypoints"));
+    nh.param("human", human, std::string("True"));
     nh.param("joints_topic", joints_topic, std::string("/shadow_joints"));
 
     // ROS Transform
@@ -364,6 +364,9 @@ int main(int argc, char **argv)
         prev_kp.push_back(empty_pos);
     
     // Create Subscriber
+    std::string keypoints_topic = "/human_hand_keypoints";
+    if (human=="False")
+        keypoints_topic = "/shadow_hand_keypoints";
     ros::Subscriber hand_keypoints_sub = nh.subscribe(keypoints_topic, 1, handKeypointsCB);
 
     // Create Publisher

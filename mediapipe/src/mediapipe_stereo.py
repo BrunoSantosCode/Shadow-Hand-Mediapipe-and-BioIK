@@ -2,6 +2,7 @@
 
 import os
 import cv2
+import time
 import rospy
 import rospkg
 import numpy as np
@@ -14,20 +15,22 @@ from geometry_msgs.msg import Point
 from messages.msg import HandKeypoints
 from std_msgs.msg import Header
 
-mp_hands = None
-mp_drawing = None
-detect_hands = None
-camera_params = None
-camera_resolution = None
+mpHands = None
+mpDrawing = None
+cameraParams = None
+detectHandLeft = None
+detectHandRight = None
 wrist_if_mcp_dist = None
-keypointsPublisher = None
+humanKeypointsPublisher = None
+shadowKeypointsPublisher = None
+lastTime = None
 
-def load_camera_params(config_file, resolution):
+def load_camera_params(config_file, height):
     """
     Load camera parameters for the specified resolution
     Args:
         config_file: Path to the .conf file
-        resolution: Camera resolution as a string ('VGA', 'HD', 'FHD' or '2K')
+        height: Image height (pixels)
     Returns:
         Dictionary with intrinsic and extrinsic parameters for left and right cameras
     """
@@ -38,6 +41,16 @@ def load_camera_params(config_file, resolution):
     if not os.access(config_file, os.R_OK):
         print(f"Error: Config file '{config_file}' is not readable.")
         return None
+    
+    # Convert Height Pixels to Resolution
+    resolution = 'VGA'
+    if height == 1242:
+        resolution = '2K'
+    elif height == 1080:
+        resolution = 'FHD'
+    elif height == 720:
+        resolution = 'HD'
+    print(colored(f'\nZED Camera Resolution: {resolution}\n', 'green'))
 
     # Load Config File
     config = configparser.ConfigParser()
@@ -104,27 +117,27 @@ def run_mediapipe(image, detector):
                                        y=landmark.y*height, 
                                        z=0))
             # Draw Hand Keypoints
-            mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            mpDrawing.draw_landmarks(image, hand_landmarks, mpHands.HAND_CONNECTIONS)
 
         return keypoints, image
     return None, image
 
-def compute_3d_coordinates(left_keypoints, right_keypoints, camera_params):
+def compute_3d_coordinates(left_keypoints, right_keypoints, cameraParams):
     """
     Compute 3D coordinates from stereo keypoints
     Args:
         left_keypoints: List of keypoints from the left image
         right_keypoints: List of keypoints from the right image
-        camera_params: Dictionary containing 'baseline', 'left' and 'right' camera intrinsic parameters
+        cameraParams: Dictionary containing 'baseline', 'left' and 'right' camera intrinsic parameters
     Returns:
         3D keypoints as a list of Point messages
     """
 
-    baseline = camera_params['stereo']['baseline']
-    fx = camera_params['left']['fx']
-    fy = camera_params['left']['fy']
-    cx = camera_params['left']['cx']
-    cy = camera_params['left']['cy']
+    baseline = cameraParams['stereo']['baseline']
+    fx = cameraParams['left']['fx']
+    fy = cameraParams['left']['fy']
+    cx = cameraParams['left']['cx']
+    cy = cameraParams['left']['cy']
     
     keypoints_3d = []
     for left, right in zip(left_keypoints, right_keypoints):
@@ -146,14 +159,12 @@ def transform_keypoints(keypoints):
     - Z-axis is defined by the vector from WRIST [KP0] to MIDDLE_FINGER_MCP [KP9]
     - X-axis is defined by the vector from INDEX_FINGER_MCP [KP5]  to MIDDLE_FINGER_MCP [KP9]
     Args:
-        keypoints: The raw keypoints.
+        keypoints: The raw keypoints
     Returns:
-        transformed_keypoints: The transformed keypoints in the new coordinate frame.
+        transformed_keypoints: The transformed keypoints in the new coordinate frame
     """
 
     global wrist_if_mcp_dist
-
-    print(Keypoints)
 
     wrist = keypoints[0]
 
@@ -196,47 +207,148 @@ def transform_keypoints(keypoints):
     
     return transformed_keypoints
 
+def normalize(vector):
+    """
+    Normalizes a given vector to a unit vector
+    Args:
+        vector: Input vector
+    Returns:
+        normalizedVector: Normalized vector
+    """
+    norm = np.linalg.norm(vector)
+    if norm == 0:
+        return vector
+    normalizedVector = vector / norm
+    return normalizedVector
+
+def map_keypoints_shadow(humanKeypoints):
+    """
+    Transform keypoints to match Shadow Hand dimensions:
+    Args:
+        keypoints: The raw keypoints
+    Returns:
+        shadow_keypoints: The new keypoints adapted to Shadow Hand
+    """
+
+    # Convert Keypoints to Arrays
+    humanKeypointsArray = [np.array([kp.x, kp.y, kp.z]) for kp in humanKeypoints]
+
+    # Convert Keypoints to Shadow Hand
+    shadowKeypointsArray = [np.array([0.0, 0.0, 0.0]) for kp in humanKeypoints]
+    shadowKeypointsArray[0] = humanKeypointsArray[0]
+
+    # Thumb
+    metacarpalSize = np.sqrt(29**2 + 34**2)
+    shadowKeypointsArray[1] = normalize(humanKeypointsArray[1]-humanKeypointsArray[0]) * metacarpalSize / 1000
+    shadowKeypointsArray[2] = shadowKeypointsArray[1] + normalize(humanKeypointsArray[2]-humanKeypointsArray[1]) * 38.0 / 1000
+    shadowKeypointsArray[3] = shadowKeypointsArray[2] + normalize(humanKeypointsArray[3]-humanKeypointsArray[2]) * 32.0 / 1000
+    shadowKeypointsArray[4] = shadowKeypointsArray[3] + normalize(humanKeypointsArray[4]-humanKeypointsArray[3]) * 37.5 / 1000
+    # Forefinger
+    metacarpalSize = np.sqrt(95**2 + 33**2)
+    shadowKeypointsArray[5] = normalize(humanKeypointsArray[5]-humanKeypointsArray[0]) * metacarpalSize / 1000
+    shadowKeypointsArray[6] = shadowKeypointsArray[5] + normalize(humanKeypointsArray[6]-humanKeypointsArray[5]) * 45.0 / 1000
+    shadowKeypointsArray[7] = shadowKeypointsArray[6] + normalize(humanKeypointsArray[7]-humanKeypointsArray[6]) * 25.0 / 1000
+    shadowKeypointsArray[8] = shadowKeypointsArray[7] + normalize(humanKeypointsArray[8]-humanKeypointsArray[7]) * 26.0 / 1000
+    # Middlefinger
+    metacarpalSize = np.sqrt(99**2 + 11**2)
+    shadowKeypointsArray[9] = normalize(humanKeypointsArray[9]-humanKeypointsArray[0]) * metacarpalSize / 1000
+    shadowKeypointsArray[10] = shadowKeypointsArray[9] + normalize(humanKeypointsArray[10]-humanKeypointsArray[9]) * 45.0 / 1000
+    shadowKeypointsArray[11] = shadowKeypointsArray[10] + normalize(humanKeypointsArray[11]-humanKeypointsArray[10]) * 25.0 / 1000
+    shadowKeypointsArray[12] = shadowKeypointsArray[11] + normalize(humanKeypointsArray[12]-humanKeypointsArray[11]) * 26.0 / 1000
+    # Ringfinger
+    metacarpalSize = np.sqrt(95**2 + 11**2)
+    shadowKeypointsArray[13] = normalize(humanKeypointsArray[13]-humanKeypointsArray[0]) * metacarpalSize / 1000
+    shadowKeypointsArray[14] = shadowKeypointsArray[13] + normalize(humanKeypointsArray[14]-humanKeypointsArray[13]) * 45.0 / 1000
+    shadowKeypointsArray[15] = shadowKeypointsArray[14] + normalize(humanKeypointsArray[15]-humanKeypointsArray[14]) * 25.0 / 1000
+    shadowKeypointsArray[16] = shadowKeypointsArray[15] + normalize(humanKeypointsArray[16]-humanKeypointsArray[15]) * 26.0 / 1000
+    # Littlefinger
+    metacarpalSize = np.sqrt(86.6**2 + 33**2)
+    shadowKeypointsArray[17] = normalize(humanKeypointsArray[17]-humanKeypointsArray[0]) * metacarpalSize / 1000
+    shadowKeypointsArray[18] = shadowKeypointsArray[17] + normalize(humanKeypointsArray[18]-humanKeypointsArray[17]) * 45.0 / 1000
+    shadowKeypointsArray[19] = shadowKeypointsArray[18] + normalize(humanKeypointsArray[19]-humanKeypointsArray[18]) * 25.0 / 1000
+    shadowKeypointsArray[20] = shadowKeypointsArray[19] + normalize(humanKeypointsArray[20]-humanKeypointsArray[19]) * 26.0 / 1000
+
+    # Convert Keypoints back to Point
+    shadowKeypoints = [Point(kp[0], kp[1], kp[2]) for kp in shadowKeypointsArray]
+
+    return shadowKeypoints
+
+def palm2wrist(keypoints):
+    """
+    Changes keypoints referential frame from 'rh_palm' to 'rh_wrist'
+    Args:
+        keypoints: The raw keypoints
+    Returns:
+        wristKeypoints: The keypoints in 'rh_wrist' referential frame
+    """
+    wristKeypoints = [Point(kp.x, kp.y, kp.z+(34.0/1000)) for kp in keypoints]
+    return wristKeypoints
+
 def image_callback(msg):
-    global mp_hands, detect_hands, mp_drawing, camera_params, keypointsPublisher
+    global mpHands, detectHandLeft, detectHandRight, mpDrawing
+    global cameraParams, humanKeypointsPublisher, shadowKeypointsPublisher
+    global lastTime
 
     # Convert image to OpenCV
     bridge = CvBridge()
     cvImage = bridge.imgmsg_to_cv2(msg, "bgr8")
 
     # Split Stereo Image into Left and Right Images
-    _, width, _ = cvImage.shape
+    height, width, _ = cvImage.shape
     singleImageWidth = width // 2
     cvLeftImage = cvImage[:, :singleImageWidth]
     cvRightImage = cvImage[:, singleImageWidth:]
 
+    # Load ZED Camera Parameters
+    if not cameraParams:
+        package_path = rospkg.RosPack().get_path('mediapipe')
+        config_file = package_path + '/conf/camera.conf'
+        cameraParams = load_camera_params(config_file, height)
+
     # Mediapipe
-    leftKeypoints, cvLeftImage = run_mediapipe(cvLeftImage, detect_hands)
-    rightKeypoints, cvRightImage = run_mediapipe(cvRightImage, detect_hands)
+    leftKeypoints, cvLeftImage = run_mediapipe(cvLeftImage, detectHandLeft)
+    rightKeypoints, cvRightImage = run_mediapipe(cvRightImage, detectHandRight)
 
     # If Hand Keypoints Detected
     if leftKeypoints and rightKeypoints and len(leftKeypoints) == len(rightKeypoints):
         
         # Compute 3D Keypoints
-        keypoints = compute_3d_coordinates(leftKeypoints, rightKeypoints, camera_params)
+        keypoints = compute_3d_coordinates(leftKeypoints, rightKeypoints, cameraParams)
 
         # Check 3D Keypoints
         if keypoints:
 
             # Prepare the custom message
-            handKeypointsMsg = HandKeypoints()
-            handKeypointsMsg.header = Header()
-            handKeypointsMsg.header.stamp = rospy.Time.now()
+            humanKeypointsMsg = HandKeypoints()
+            humanKeypointsMsg.header = Header()
+            humanKeypointsMsg.header.stamp = rospy.Time.now()
+            shadowKeypointsMsg = HandKeypoints()
+            shadowKeypointsMsg.header = Header()
+            shadowKeypointsMsg.header.stamp = rospy.Time.now()
                     
             # Reorient Keypoints
-            newKeypoints = transform_keypoints(keypoints) 
-            handKeypointsMsg.keypoints = newKeypoints
+            humanKeypoints = transform_keypoints(keypoints) 
+            wristHumanKeypoints = palm2wrist(humanKeypoints) 
+            
+            # Map Human Hand to Shadow Hand
+            shadowKeypoints = map_keypoints_shadow(humanKeypoints)
+            wristShadowKeypoints = palm2wrist(shadowKeypoints)
 
             # Publish Hand Keypoints
-            keypointsPublisher.publish(handKeypointsMsg)
+            humanKeypointsMsg.keypoints = wristHumanKeypoints
+            humanKeypointsPublisher.publish(humanKeypointsMsg)
+            shadowKeypointsMsg.keypoints = wristShadowKeypoints
+            shadowKeypointsPublisher.publish(shadowKeypointsMsg)
+
+    # Display FPS
+    currentTime = time.perf_counter()
+    fps = 1/(currentTime-lastTime)
+    lastTime = currentTime
+    cv2.putText(cvLeftImage, f"FPS: {fps:.0f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
 
     # Display the image using OpenCV
     cv2.imshow("Left Image", cvLeftImage)
-    cv2.imshow("Right Image", cvRightImage)
+    #cv2.imshow("Right Image", cvRightImage)
     
     # Wait for 'q' key press to exit
     key = cv2.waitKey(1)
@@ -246,34 +358,32 @@ def image_callback(msg):
         return
 
 def main():
-    global mp_hands, detect_hands, mp_drawing
-    global keypointsPublisher, camera_resolution, wrist_if_mcp_dist
-    global camera_params
+    global mpHands, detectHandLeft, detectHandRight, mpDrawing
+    global humanKeypointsPublisher, shadowKeypointsPublisher, wrist_if_mcp_dist
+    global lastTime
 
     # Init ROS
     rospy.init_node('zed_left_image_subscriber', anonymous=True)
 
     # Get ROS Parameters
-    camera_resolution = rospy.get_param('~camera_resolution', 'HD')
     wrist_if_mcp_dist = rospy.get_param('~wrist_if_mcp_topic', '0.10')
     image_topic = rospy.get_param('~image_topic', '/zed/stereo_image')
-    keypoints_topic = rospy.get_param('~keypoints_topic', '/hand_keypoints')
-
-    # Load Camera Parameters
-    package_path = rospkg.RosPack().get_path('mediapipe')
-    config_file = package_path + '/conf/camera.conf'
-    camera_params = load_camera_params(config_file, camera_resolution)
+    human_keypoints_topic = rospy.get_param('~keypoints_topic', '/human_hand_keypoints')
+    shadow_keypoints_topic = rospy.get_param('~keypoints_topic', '/shadow_hand_keypoints')
 
     # Init Mediapipe
-    mp_hands = mp.solutions.hands
-    detect_hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, model_complexity=0, min_detection_confidence=0.75)
-    mp_drawing = mp.solutions.drawing_utils
+    mpHands = mp.solutions.hands
+    detectHandLeft = mpHands.Hands(static_image_mode=False, max_num_hands=1, model_complexity=0, min_detection_confidence=0.75)
+    detectHandRight = mpHands.Hands(static_image_mode=False, max_num_hands=1, model_complexity=0, min_detection_confidence=0.75)
+    mpDrawing = mp.solutions.drawing_utils
     
     # Create ROS Subscriber
     rospy.Subscriber(image_topic, Image, image_callback)
+    lastTime = time.perf_counter()
 
     # Create ROS Publisher
-    keypointsPublisher = rospy.Publisher(keypoints_topic, HandKeypoints, queue_size=1)
+    humanKeypointsPublisher = rospy.Publisher(human_keypoints_topic, HandKeypoints, queue_size=1)
+    shadowKeypointsPublisher = rospy.Publisher(shadow_keypoints_topic, HandKeypoints, queue_size=1)
 
     # Spin
     rospy.spin()

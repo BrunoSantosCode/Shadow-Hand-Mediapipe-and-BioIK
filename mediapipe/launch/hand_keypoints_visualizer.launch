@@ -1,12 +1,12 @@
 <launch>
-    <!-- ROS Topic Parameters -->
-    <arg name="keypoints_topic" default="/hand_keypoints" />
-    <arg name="rviz_topic" default="/hand_keypoints_rviz" />
-
-    <!-- Node -->
-    <node name="hand_keypoints_visualizer" pkg="mediapipe" type="hand_keypoints_visualizer.py" output="screen">
+    <!-- Node [Human Hand Keypoints] -->
+    <node name="human_hand_keypoints_visualizer" pkg="mediapipe" type="hand_keypoints_visualizer.py" output="screen">
         <!-- Set Parameters -->
-        <param name="keypoints_topic" value="$(arg keypoints_topic)" />
-        <param name="rviz_topic" value="$(arg rviz_topic)" />
+        <param name="human" value="True" />
+    </node>
+    <!-- Node [Shadow Hand Keypoints] -->
+    <node name="shadow_hand_keypoints_visualizer" pkg="mediapipe" type="hand_keypoints_visualizer.py" output="screen">
+        <!-- Set Parameters -->
+        <param name="human" value="False" />
     </node>
 </launch>
