@@ -155,9 +155,9 @@ def compute_3d_coordinates(leftKeypoints, rightKeypoints, cameraParams):
         3D keypoints as a list of Point messages
     """
 
-    baseline = cameraParams['stereo']['baseline']
-    fx = cameraParams['left']['fx']
-    fy = cameraParams['left']['fy']
+    baseline = cameraParams['stereo']['baseline'] / 1000.0
+    fx = (cameraParams['left']['fx'] + cameraParams['right']['fx']) / 2.0
+    fy = (cameraParams['left']['fy'] + cameraParams['right']['fy']) / 2.0
     cx = cameraParams['left']['cx']
     cy = cameraParams['left']['cy']
     
