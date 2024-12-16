@@ -266,7 +266,7 @@ def map_keypoints_shadow(humanKeypoints):
     shadowKeypointsArray[1] = normalize(humanKeypointsArray[1]-humanKeypointsArray[0]) * metacarpalSize / 1000
     shadowKeypointsArray[2] = shadowKeypointsArray[1] + normalize(humanKeypointsArray[2]-humanKeypointsArray[1]) * 38.0 / 1000
     shadowKeypointsArray[3] = shadowKeypointsArray[2] + normalize(humanKeypointsArray[3]-humanKeypointsArray[2]) * 32.0 / 1000
-    shadowKeypointsArray[4] = shadowKeypointsArray[3] + normalize(humanKeypointsArray[4]-humanKeypointsArray[3]) * 37.5 / 1000
+    shadowKeypointsArray[4] = shadowKeypointsArray[3] + normalize(humanKeypointsArray[4]-humanKeypointsArray[3]) * 27.5 / 1000
     # Forefinger
     metacarpalSize = np.sqrt(95**2 + 33**2)
     shadowKeypointsArray[5] = normalize(humanKeypointsArray[5]-humanKeypointsArray[0]) * metacarpalSize / 1000
