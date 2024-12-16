@@ -66,26 +66,25 @@ void bio_ik_solver()
         }
 
         // Get target joints position/orientation
-        std::vector<Eigen::Vector3d> linkPos(10);
-        std::vector<Eigen::Vector3d> linkDir(6);
+        std::vector<Eigen::Vector3d> linkPos(15);
         mutex_kp.lock();
             linkPos[0] = mean_kp[4];   // th_tip
             linkPos[1] = mean_kp[8];   // ff_tip
             linkPos[2] = mean_kp[12];  // mf_tip 
             linkPos[3] = mean_kp[16];  // rf_tip
             linkPos[4] = mean_kp[20];  // lf_tip
-            linkPos[5] = mean_kp[2];   // th_middle 
-            linkPos[6] = mean_kp[6];   // ff_middle
-            linkPos[7] = mean_kp[10];  // mf_middle
-            linkPos[8] = mean_kp[14];  // rf_middle
-            linkPos[9] = mean_kp[18];  // lf_middle
 
-            linkDir[0] = mean_kp[6]  - mean_kp[5];   // ff_proximal
-            linkDir[1] = mean_kp[10] - mean_kp[9];   // mf_proximal
-            linkDir[2] = mean_kp[14] - mean_kp[13];  // rf_proximal 
-            linkDir[3] = mean_kp[18] - mean_kp[17];  // lf_proximal
-            linkDir[4] = mean_kp[3]  - mean_kp[2];   // th_middle
-            linkDir[5] = mean_kp[4] - mean_kp[3];    // th_distal
+            linkPos[5] = mean_kp[3];   // th_distal 
+            linkPos[6] = mean_kp[7];   // ff_distal
+            linkPos[7] = mean_kp[11];  // mf_distal
+            linkPos[8] = mean_kp[15];  // rf_distal
+            linkPos[9] = mean_kp[19];  // lf_distal
+
+            linkPos[10] = mean_kp[2];  // th_middle 
+            linkPos[11] = mean_kp[6];  // ff_middle
+            linkPos[12] = mean_kp[10]; // mf_middle
+            linkPos[13] = mean_kp[14]; // rf_middle
+            linkPos[14] = mean_kp[18]; // lf_middle
         mutex_kp.unlock();
 
         // DEBUG
@@ -95,19 +94,6 @@ void bio_ik_solver()
             std::cout << "MF_TIP = ("    << linkPos[2].x() << "," << linkPos[2].y() << "," << linkPos[2].z() << ")" << std::endl;
             std::cout << "RF_TIP = ("    << linkPos[3].x() << "," << linkPos[3].y() << "," << linkPos[3].z() << ")" << std::endl;
             std::cout << "LF_TIP = ("    << linkPos[4].x() << "," << linkPos[4].y() << "," << linkPos[4].z() << ")" << std::endl;
-            std::cout << "TH_MIDDLE = (" << linkPos[5].x() << "," << linkPos[5].y() << "," << linkPos[5].z() << ")" << std::endl;
-            std::cout << "FF_MIDDLE = (" << linkPos[6].x() << "," << linkPos[6].y() << "," << linkPos[6].z() << ")" << std::endl;
-            std::cout << "MF_MIDDLE = (" << linkPos[7].x() << "," << linkPos[7].y() << "," << linkPos[7].z() << ")" << std::endl;
-            std::cout << "RF_MIDDLE = (" << linkPos[8].x() << "," << linkPos[8].y() << "," << linkPos[8].z() << ")" << std::endl;
-            std::cout << "LF_MIDDLE = (" << linkPos[9].x() << "," << linkPos[9].y() << "," << linkPos[9].z() << ")" << std::endl;
-        }
-        if (false) {
-            std::cout << "FF_PROXIMAL = (" << linkDir[0].x() << "," << linkDir[1].y() << "," << linkDir[1].z() << ")" << std::endl;
-            std::cout << "MF_PROXIMAL = (" << linkDir[1].x() << "," << linkDir[2].y() << "," << linkDir[2].z() << ")" << std::endl;
-            std::cout << "RF_PROXIMAL = (" << linkDir[2].x() << "," << linkDir[3].y() << "," << linkDir[3].z() << ")" << std::endl;
-            std::cout << "LF_PROXIMAL = (" << linkDir[3].x() << "," << linkDir[4].y() << "," << linkDir[4].z() << ")" << std::endl;
-            std::cout << "TH_MIDDLE = ("   << linkDir[4].x() << "," << linkDir[0].y() << "," << linkDir[0].z() << ")" << std::endl;
-            std::cout << "LF_DISTAL = ("   << linkDir[5].x() << "," << linkDir[5].y() << "," << linkDir[5].z() << ")" << std::endl;
         }
 
         // BioIK Conditions Set
@@ -118,27 +104,25 @@ void bio_ik_solver()
             "rh_mftip",
             "rh_rftip",
             "rh_lftip",
+
+            "rh_thdistal",
+            "rh_ffdistal",
+            "rh_mfdistal",
+            "rh_rfdistal",
+            "rh_lfdistal",
+
             "rh_thmiddle",
             "rh_ffmiddle",
             "rh_mfmiddle",
             "rh_rfmiddle",
             "rh_lfmiddle"
         };
-        std::vector<std::string> MapDirectionlinks {
-            "rh_ffproximal",
-            "rh_mfproximal",
-            "rh_rfproximal",
-            "rh_lfproximal",
-            "rh_thmiddle",
-            "rh_thdistal"
-        };
-
 
         // BioIK Conditions Weights
-        std::vector <float> MapPositionWeights {1.0,1.0,1.0,1.0,1.0,0.2,0.2,0.2,0.2,0.2};
-        std::vector <float> MapDirectionWeights{0.1,0.1,0.1,0.1,0.1,0.1};
-        float CoupleJointsWeight = 0.8;
-        float CenterJointsWeight = 0.1;
+        std::vector <float> MapPositionWeights {1.0,1.0,1.0,1.0,1.0, 0.75,0.25,0.25,0.25,0.25, 0.25,0.50,0.50,0.50,0.50};
+        float CoupleJointsWeight = 0.75;
+        float CenterJointsWeight = 0.10;
+        float MinimalDisplacementWeight = 0.10;
         // BioIK Goals
         bio_ik::BioIKKinematicsQueryOptions ik_options;
         ik_options.replace = true;
@@ -149,7 +133,7 @@ void bio_ik_solver()
         {
             // rh_wrist -> base_frame
             geometry_msgs::PointStamped stamped_in;
-            stamped_in.header.frame_id = "rh_wrist";
+            stamped_in.header.frame_id = "rh_palm";
             stamped_in.point.x = linkPos[i].x();
             stamped_in.point.y = linkPos[i].y();
             stamped_in.point.z = linkPos[i].z();
@@ -158,21 +142,7 @@ void bio_ik_solver()
             tf2::Vector3 Mapposition (stamped_out.point.x, stamped_out.point.y, stamped_out.point.z);
             ik_options.goals.emplace_back(new bio_ik::PositionGoal(MapPositionlinks[i], Mapposition, MapPositionWeights[i]));
         }
-        // Set orientation constraints
-        for (int i=0; i<MapDirectionlinks.size(); i++)
-        {
-            // rh_wrist -> base_frame
-            geometry_msgs::PointStamped stamped_in;
-            stamped_in.header.frame_id = "rh_wrist";
-            stamped_in.point.x = linkDir[i].x();
-            stamped_in.point.y = linkDir[i].y();
-            stamped_in.point.z = linkDir[i].z();
-            geometry_msgs::PointStamped stamped_out;
-            tfBuffer.transform(stamped_in, stamped_out, base_frame);
-            tf2::Vector3 Mapdirection (stamped_out.point.x, stamped_out.point.y, stamped_out.point.z);
-            ik_options.goals.emplace_back(new bio_ik::DirectionGoal(MapDirectionlinks[i], tf2::Vector3(0,0,1), Mapdirection.normalized(), MapDirectionWeights[i]));
-        }
-        // Set non-linear Shadow Hand joint coupling constraints
+        // Non-linear Shadow Hand joint coupling constraints
         std::vector<std::string> ff_coupled_joints, mf_coupled_joints, rf_coupled_joints, lf_coupled_joints;
             // First Finger
         ff_coupled_joints.push_back("rh_FFJ1");
@@ -215,8 +185,11 @@ void bio_ik_solver()
                         );
         ik_options.goals.emplace_back(lf_goal);
 
-        // Set Center Joints Goal
+        // Center Joints Goal
         ik_options.goals.emplace_back(new bio_ik::CenterJointsGoal(CenterJointsWeight));
+
+        // Minimal Displacement Goal
+        ik_options.goals.emplace_back(new bio_ik::MinimalDisplacementGoal(MinimalDisplacementWeight));
 
         // Get Current Robot State
         robot_state::RobotState& current_state = (*planning_scene_pointer).getCurrentStateNonConst();   
