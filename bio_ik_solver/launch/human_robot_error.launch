@@ -1,0 +1,10 @@
+<launch>
+    <!-- ROS Topic Parameters -->
+    <arg name="keypoints_topic" default="/shadow_hand_keypoints" />
+
+    <!-- Node -->
+    <node name="human_robot_error" pkg="bio_ik_solver" type="human_robot_error.py" output="screen">
+        <!-- Set Parameters -->
+        <param name="keypoints_topic" value="$(arg keypoints_topic)" />
+    </node>
+</launch>

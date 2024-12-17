@@ -143,6 +143,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(bio_ik_node src/bio_ik.cpp)
+add_executable(bio_ik_no_filter_node src/bio_ik_no_filter.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -153,9 +154,14 @@ add_executable(bio_ik_node src/bio_ik.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(bio_ik_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(bio_ik_no_filter_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(bio_ik_node
+  ${catkin_LIBRARIES}
+  Eigen3::Eigen
+)
+target_link_libraries(bio_ik_no_filter_node
   ${catkin_LIBRARIES}
   Eigen3::Eigen
 )

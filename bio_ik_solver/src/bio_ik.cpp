@@ -121,8 +121,9 @@ void bio_ik_solver()
         // BioIK Conditions Weights
         std::vector <float> MapPositionWeights {1.0,1.0,1.0,1.0,1.0, 0.75,0.25,0.25,0.25,0.25, 0.25,0.50,0.50,0.50,0.50};
         float CoupleJointsWeight = 0.75;
-        float CenterJointsWeight = 0.10;
+        float CenterJointsWeight = 0.05;
         float MinimalDisplacementWeight = 0.10;
+
         // BioIK Goals
         bio_ik::BioIKKinematicsQueryOptions ik_options;
         ik_options.replace = true;
@@ -133,7 +134,7 @@ void bio_ik_solver()
         {
             // rh_wrist -> base_frame
             geometry_msgs::PointStamped stamped_in;
-            stamped_in.header.frame_id = "rh_palm";
+            stamped_in.header.frame_id = "rh_wrist";
             stamped_in.point.x = linkPos[i].x();
             stamped_in.point.y = linkPos[i].y();
             stamped_in.point.z = linkPos[i].z();
@@ -142,48 +143,20 @@ void bio_ik_solver()
             tf2::Vector3 Mapposition (stamped_out.point.x, stamped_out.point.y, stamped_out.point.z);
             ik_options.goals.emplace_back(new bio_ik::PositionGoal(MapPositionlinks[i], Mapposition, MapPositionWeights[i]));
         }
+
         // Non-linear Shadow Hand joint coupling constraints
-        std::vector<std::string> ff_coupled_joints, mf_coupled_joints, rf_coupled_joints, lf_coupled_joints;
-            // First Finger
-        ff_coupled_joints.push_back("rh_FFJ1");
-        ff_coupled_joints.push_back("rh_FFJ2");
-        auto* ff_goal = new bio_ik::JointFunctionGoal(
-                            ff_coupled_joints,
-                            [=] (std::vector<double>& vv) {
-                                vv[0] = fmin(vv[0], vv[1]);  // J1<=J2
-                            },  CoupleJointsWeight 
-                        );
-        ik_options.goals.emplace_back(ff_goal);
-            // Middle Finger
-        mf_coupled_joints.push_back("rh_MFJ1");
-        mf_coupled_joints.push_back("rh_MFJ2");
-        auto* mf_goal = new bio_ik::JointFunctionGoal(
-                            mf_coupled_joints,
-                            [=] (std::vector<double>& vv) {
-                                vv[0] = fmin(vv[0], vv[1]);  // J1<=J2
-                            },  CoupleJointsWeight 
-                        );
-        ik_options.goals.emplace_back(mf_goal);
-            // Ring Finger
-        rf_coupled_joints.push_back("rh_RFJ1");
-        rf_coupled_joints.push_back("rh_RFJ2");
-        auto* rf_goal = new bio_ik::JointFunctionGoal(
-                            rf_coupled_joints,
-                            [=] (std::vector<double>& vv) {
-                                vv[0] = fmin(vv[0], vv[1]);  // J1<=J2 
-                            },  CoupleJointsWeight  
-                        );
-        ik_options.goals.emplace_back(rf_goal);
-            // Little Finger
-        lf_coupled_joints.push_back("rh_LFJ1");
-        lf_coupled_joints.push_back("rh_LFJ2");
-        auto* lf_goal = new bio_ik::JointFunctionGoal(
-                            lf_coupled_joints,
-                            [=] (std::vector<double>& vv) {
-                                vv[0] = fmin(vv[0], vv[1]);  // J1<=J2  
-                            },  CoupleJointsWeight  
-                        );
-        ik_options.goals.emplace_back(lf_goal);
+        auto createJointGoal = [&](const std::string& joint1, const std::string& joint2) {
+            std::vector<std::string> coupled_joints {joint1, joint2};
+            return new bio_ik::JointFunctionGoal(
+                coupled_joints,
+                [=](std::vector<double>& vv) {
+                    vv[0] = fmin(vv[0], vv[1]); // J1 <= J2
+                }, CoupleJointsWeight);
+        };
+        ik_options.goals.emplace_back(createJointGoal("rh_FFJ1", "rh_FFJ2"));
+        ik_options.goals.emplace_back(createJointGoal("rh_MFJ1", "rh_MFJ2"));
+        ik_options.goals.emplace_back(createJointGoal("rh_RFJ1", "rh_RFJ2"));
+        ik_options.goals.emplace_back(createJointGoal("rh_LFJ1", "rh_LFJ2"));
 
         // Center Joints Goal
         ik_options.goals.emplace_back(new bio_ik::CenterJointsGoal(CenterJointsWeight));
