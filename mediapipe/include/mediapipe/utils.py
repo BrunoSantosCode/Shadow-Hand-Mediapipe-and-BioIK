@@ -259,7 +259,6 @@ def map_keypoints_shadow(humanKeypoints):
 
     # Convert Keypoints to Shadow Hand
     shadowKeypointsArray = [np.array([0.0, 0.0, 0.0]) for kp in humanKeypoints]
-    shadowKeypointsArray[0] = humanKeypointsArray[0]
 
     # Thumb
     metacarpalSize = np.sqrt(29**2 + 34**2)

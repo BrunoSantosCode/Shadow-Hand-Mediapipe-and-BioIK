@@ -199,10 +199,9 @@ int main(int argc, char **argv)
     time_begin = ros::Time::now();
 
     // Get ROS parameters
-    std::string human;
-    std::string joints_topic;
-    nh.param("human", human, std::string("True"));
-    nh.param("joints_topic", joints_topic, std::string("/shadow_joints"));
+    std::string keypoints_topic, joints_topic;
+    nh.param(ros::this_node::getName() + "/keypoints_topic", keypoints_topic, std::string("/shadow_hand_keypoints"));
+    nh.param(ros::this_node::getName() + "/joints_topic", joints_topic, std::string("/shadow_joints"));
 
     // ROS Transform
     tf2_ros::TransformListener tfListener(tfBuffer);
@@ -240,16 +239,14 @@ int main(int argc, char **argv)
     planning_scene_pointer = &planning_scene;
 
     // Create Subscriber
-    std::string keypoints_topic = "/human_hand_keypoints";
-    if (human == "False")
-        keypoints_topic = "/shadow_hand_keypoints";
     ros::Subscriber hand_keypoints_sub = nh.subscribe(keypoints_topic, 1, handKeypointsCB);
+    std::cout << "\nHand Keypoints Topic: " << keypoints_topic << std::endl;
 
     // Create Publisher
     joints_shadow = nh.advertise<std_msgs::Float64MultiArray>(joints_topic, 1);
 
     // Ready 
-    std::cout << "\n\033[1;32m\"bio_ik\" ROS node is ready!\033[0m\n" << std::endl;
+    std::cout << "\n\033[1;32m\"bio_ik_no_filter\" ROS node is ready!\033[0m\n" << std::endl;
 
     ros::waitForShutdown();
     return 0;
