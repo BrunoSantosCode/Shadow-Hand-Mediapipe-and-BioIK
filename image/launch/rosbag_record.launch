@@ -1,0 +1,10 @@
+<launch>
+    <!-- Rosbag Parameters -->
+    <arg name="rosbag_name" default="default" />
+
+    <!-- Node -->
+    <node name="rosbag_record" pkg="image" type="rosbag_record.py" output="screen">
+        <!-- Set Parameters -->
+        <param name="rosbag_name" value="$(arg rosbag_name)" />
+    </node>
+</launch>

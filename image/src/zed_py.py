@@ -14,7 +14,7 @@ def zed():
     resolution_param = rospy.get_param('~camera_resolution', 'HD')
     depth_mode_param = rospy.get_param('~depth_mode', 'PERFORMANCE')
     left_topic = rospy.get_param('~left_image_topic', '/zed/left_image')
-    right_topic = rospy.get_param('~right_image_topic', '/zed/right_image')
+    #right_topic = rospy.get_param('~right_image_topic', '/zed/right_image')
     stereo_topic = rospy.get_param('~stereo_image_topic', '/zed/stereo_image')
 
     # Map resolution parameter to ZED SDK resolution
@@ -39,7 +39,7 @@ def zed():
 
     # Create ROS Publishers
     leftImagePub = rospy.Publisher(left_topic, Image, queue_size=1)
-    rightImagePub = rospy.Publisher(right_topic, Image, queue_size=1)
+    #rightImagePub = rospy.Publisher(right_topic, Image, queue_size=1)
     stereoImagePub = rospy.Publisher(stereo_topic, Image, queue_size=1)
 
     # Create a CvBridge object to convert OpenCV images to ROS Image messages
@@ -82,12 +82,12 @@ def zed():
 
             # Convert to ROS
             rosLeftImage = bridge.cv2_to_imgmsg(cvLeftImage, "bgr8")
-            rosRightImage = bridge.cv2_to_imgmsg(cvRightImage, "bgr8")
+            #rosRightImage = bridge.cv2_to_imgmsg(cvRightImage, "bgr8")
             rosStereoImage = bridge.cv2_to_imgmsg(cvStereoImage, "bgr8")
 
             # Publish to ROS
             leftImagePub.publish(rosLeftImage)
-            rightImagePub.publish(rosRightImage)
+            #rightImagePub.publish(rosRightImage)
             stereoImagePub.publish(rosStereoImage)
     
     # Close ZED camera

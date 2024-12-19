@@ -51,15 +51,20 @@ def image_callback(msg):
         humanKeypointsPublisher.publish(humanKeypointsMsg)
         shadowKeypointsMsg.keypoints = wristShadowKeypoints
         shadowKeypointsPublisher.publish(shadowKeypointsMsg)
+
+    # Resize image to display
+    origHeight, origWidth = cvImage.shape[:2]
+    newWidth = int( 720 * (origWidth/origHeight) )
+    displayImage = cv2.resize(cvImage, (newWidth, 720), interpolation=cv2.INTER_AREA)
     
     # Display FPS
     currentTime = time.perf_counter()
     fps = 1/(currentTime-lastTime)
     lastTime = currentTime
-    cv2.putText(cvImage, f"FPS: {fps:.0f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+    cv2.putText(displayImage, f"FPS: {fps:.0f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
 
     # Display the image using OpenCV
-    cv2.imshow("Image", cvImage)
+    cv2.imshow("Image", displayImage)
     
     # Wait for 'q' key press to exit
     key = cv2.waitKey(1)

@@ -78,9 +78,13 @@ def image_callback(msg):
     lastTime = currentTime
     cv2.putText(cvLeftImage, f"FPS: {fps:.0f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
 
+    # Resize image to display
+    origHeight, origWidth = cvLeftImage.shape[:2]
+    newWidth = int( 720 * (origWidth/origHeight) )
+    displayImage = cv2.resize(cvLeftImage, (newWidth, 720), interpolation=cv2.INTER_AREA)
+
     # Display the image using OpenCV
-    cv2.imshow("Left Image", cvLeftImage)
-    #cv2.imshow("Right Image", cvRightImage)
+    cv2.imshow("Left Image", displayImage)
     
     # Wait for 'q' key press to exit
     key = cv2.waitKey(1)

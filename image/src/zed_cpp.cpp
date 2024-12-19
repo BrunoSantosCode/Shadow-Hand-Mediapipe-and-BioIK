@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     nh.param<std::string>("camera_resolution", resolution_param, "HD");
     nh.param<std::string>("depth_mode", depth_mode_param, "PERFORMANCE");
     nh.param<std::string>("left_image_topic", left_topic_param, "/zed/left_image");
-    nh.param<std::string>("right_image_topic", right_topic_param, "/zed/right_image");
+    //nh.param<std::string>("right_image_topic", right_topic_param, "/zed/right_image");
     nh.param<std::string>("stereo_image_topic", stereo_topic_param, "/zed/stereo_image");
 
     // Map resolution parameter to ZED SDK resolution
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
     // Create ROS Publishers
     ros::Publisher leftImagePub = nh.advertise<sensor_msgs::Image>(left_topic_param, 1);
-    ros::Publisher rightImagePub = nh.advertise<sensor_msgs::Image>(right_topic_param, 1);
+    //ros::Publisher rightImagePub = nh.advertise<sensor_msgs::Image>(right_topic_param, 1);
     ros::Publisher stereoImagePub = nh.advertise<sensor_msgs::Image>(stereo_topic_param, 1);
 
     // Create ZED camera object
@@ -94,15 +94,15 @@ int main(int argc, char** argv) {
 
             // Convert to ROS
             leftBridge.image = cvLeftImage;
-            rightBridge.image = cvRightImage;
+            //rightBridge.image = cvRightImage;
             stereoBridge.image = cvStereoImage;
             sensor_msgs::ImagePtr rosLeftImage = leftBridge.toImageMsg();
-            sensor_msgs::ImagePtr rosRightImage = rightBridge.toImageMsg();
+            //sensor_msgs::ImagePtr rosRightImage = rightBridge.toImageMsg();
             sensor_msgs::ImagePtr rosStereoImage = stereoBridge.toImageMsg();
 
             // Publish to ROS
             leftImagePub.publish(rosLeftImage);
-            rightImagePub.publish(rosRightImage);
+            //rightImagePub.publish(rosRightImage);
             stereoImagePub.publish(rosStereoImage);
         }
     }
