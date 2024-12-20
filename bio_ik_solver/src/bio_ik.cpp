@@ -119,8 +119,8 @@ void bio_ik_solver()
         };
 
         // BioIK Conditions Weights
-        std::vector <float> MapPositionWeights {1.0,1.0,1.0,1.0,1.0, 0.75,0.25,0.25,0.25,0.25, 0.25,0.50,0.50,0.50,0.50};
-        float CoupleJointsWeight = 0.75;
+        std::vector <float> MapPositionWeights {1.0,1.0,1.0,1.0,1.0, 0.50,0.25,0.25,0.25,0.25, 0.25,0.50,0.50,0.50,0.50};
+        float CoupleJointsWeight = 1.0;
         float CenterJointsWeight = 0.05;
         float MinimalDisplacementWeight = 0.10;
 

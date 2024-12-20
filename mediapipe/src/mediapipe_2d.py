@@ -44,6 +44,7 @@ def image_callback(msg):
         
         # Map Human Hand to Shadow Hand
         shadowKeypoints = map_keypoints_shadow(humanKeypoints)
+        shadowKeypoints = map_knuckles_shadow(shadowKeypoints)
         wristShadowKeypoints = palm2wrist(shadowKeypoints)
 
         # Publish Hand Keypoints

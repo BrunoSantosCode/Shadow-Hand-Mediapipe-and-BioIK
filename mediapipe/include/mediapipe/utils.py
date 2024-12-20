@@ -175,7 +175,7 @@ def compute_3d_coordinates(leftKeypoints, rightKeypoints, cameraParams):
     return keypoints_3d
 
 
-def transform_keypoints(keypoints, wrist_if_mcp_dist):
+def transform_keypoints(keypoints, wrist_if_mcp_dist=0.10):
     """
     Transform keypoints into a new frame where:
     - Wrist (keypoint 0) is at the origin (0, 0, 0)
@@ -295,6 +295,33 @@ def map_keypoints_shadow(humanKeypoints):
     shadowKeypoints = [Point(kp[0], kp[1], kp[2]) for kp in shadowKeypointsArray]
 
     return shadowKeypoints
+
+
+def map_knuckles_shadow(handKeypoints, knucklesDist=0.022):
+
+    # Convert Keypoints to Arrays
+    handKeypointsArray = [np.array([kp.x, kp.y, kp.z]) for kp in handKeypoints]
+
+    # Calculate Median Knuckles Distance
+    knuckle_indices = [5, 9, 13, 17]
+    knuckle_points = [handKeypointsArray[i] for i in knuckle_indices]
+    distances = [np.linalg.norm(knuckle_points[i] - knuckle_points[i - 1])
+                 for i in range(1, len(knuckle_points))]
+    median_distance = np.median(distances)
+
+    # Calculate the Scaling Factor
+    scaling_factor = knucklesDist / median_distance
+
+    # Apply scaling to the x and y coordinates (horizontal scaling)
+    scaledKeypointsArray = [
+        np.array([kp[0] * scaling_factor, kp[1] * scaling_factor, kp[2]])
+        for kp in handKeypointsArray
+    ]
+
+    # Convert Keypoints back to Point
+    scaledKeypoints = [Point(kp[0], kp[1], kp[2]) for kp in scaledKeypointsArray]
+
+    return scaledKeypoints
 
 
 def palm2wrist(keypoints):
