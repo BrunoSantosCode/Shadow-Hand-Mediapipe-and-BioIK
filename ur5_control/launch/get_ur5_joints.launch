@@ -1,0 +1,4 @@
+<launch>
+    <!-- Node -->
+    <node name="get_ur5_joints" pkg="ur5_control" type="get_ur5_joints.py" output="screen"/>
+</launch>

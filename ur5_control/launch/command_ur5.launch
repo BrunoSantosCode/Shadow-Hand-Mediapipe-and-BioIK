@@ -1,0 +1,4 @@
+<launch>
+    <!-- Node -->
+    <node name="command_ur5" pkg="ur5_control" type="command_ur5.py" output="screen"/>
+</launch>
