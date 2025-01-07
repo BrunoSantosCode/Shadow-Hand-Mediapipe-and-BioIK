@@ -19,22 +19,38 @@ void bio_ik_solver()
         std::vector<Eigen::Vector3d> mean_kp;
         mutex_kp.lock();
             for (int i=0; i<kp_positions[0].size(); i++){
-                std::vector<double> x_aux, y_aux, z_aux;
-                for (int j=0; j<kp_positions.size(); j++){
-                    x_aux.push_back(kp_positions[j][i].x());
-                    y_aux.push_back(kp_positions[j][i].y());
-                    z_aux.push_back(kp_positions[j][i].z());
-                } 
-                std::vector<double>::iterator middle_x = x_aux.begin() + x_aux.size()/2;
-                std::vector<double>::iterator middle_y = y_aux.begin() + y_aux.size()/2;
-                std::vector<double>::iterator middle_z = z_aux.begin() + z_aux.size()/2;
-                std::nth_element(x_aux.begin(), middle_x, x_aux.end());
-                std::nth_element(y_aux.begin(), middle_y, y_aux.end());
-                std::nth_element(z_aux.begin(), middle_z, z_aux.end());
+                // Median Filter
+                // std::vector<double> x_aux, y_aux, z_aux;
+                // for (int j=0; j<kp_positions.size(); j++){
+                //     x_aux.push_back(kp_positions[j][i].x());
+                //     y_aux.push_back(kp_positions[j][i].y());
+                //     z_aux.push_back(kp_positions[j][i].z());
+                // } 
+                // std::vector<double>::iterator middle_x = x_aux.begin() + x_aux.size()/2;
+                // std::vector<double>::iterator middle_y = y_aux.begin() + y_aux.size()/2;
+                // std::vector<double>::iterator middle_z = z_aux.begin() + z_aux.size()/2;
+                // std::nth_element(x_aux.begin(), middle_x, x_aux.end());
+                // std::nth_element(y_aux.begin(), middle_y, y_aux.end());
+                // std::nth_element(z_aux.begin(), middle_z, z_aux.end());
+                // Eigen::Vector3d result;
+                // result.x() = *middle_x;
+                // result.y() = *middle_y;
+                // result.z() = *middle_z;
+
+                // Mean filter
+                double sum_x = 0.0, sum_y = 0.0, sum_z = 0.0;
+                int count = kp_positions.size();
+                for (int j = 0; j < count; j++) {
+                    sum_x += kp_positions[j][i].x();
+                    sum_y += kp_positions[j][i].y();
+                    sum_z += kp_positions[j][i].z();
+                }
                 Eigen::Vector3d result;
-                result.x() = *middle_x;
-                result.y() = *middle_y;
-                result.z() = *middle_z;
+                result.x() = sum_x / count;
+                result.y() = sum_y / count;
+                result.z() = sum_z / count;
+
+                // Results
                 mean_kp.push_back(result);              
             }
         mutex_kp.unlock();

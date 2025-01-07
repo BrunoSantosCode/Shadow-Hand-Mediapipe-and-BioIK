@@ -10,7 +10,7 @@ from pynput import keyboard
 from termcolor import colored
 from sr_robot_commander.sr_arm_commander import SrArmCommander
 
-UR5_SPEED = 0.75
+UR5_SPEED = 0.50
 
 # Joints order
 # ra_elbow_joint   ra_shoulder_lift_joint   ra_shoulder_pan_joint 

@@ -49,27 +49,30 @@ def jointsCB(msg: Float64MultiArray):
         # Print the joint angles
         print("Received joint angles:")
         print(this_joints)
-    
-    # Check joints limits
-    for i in range(0,len(this_joints)):
-        if this_joints[i] > joints_max_rad[i]:
-           this_joints[i] = joints_max_rad[i]
-        elif this_joints[i] < joints_min_rad[i]:
-            this_joints[i] = joints_min_rad[i]
 
-    # Send joints command for Shadow Hand
-    hand_pos = hand_commander.get_joints_position()
+    # Check correct message
+    if len(this_joints) == 24:
+        
+        # Check joints limits
+        for i in range(0,len(this_joints)):
+            if this_joints[i] > joints_max_rad[i]:
+                this_joints[i] = joints_max_rad[i]
+            elif this_joints[i] < joints_min_rad[i]:
+                this_joints[i] = joints_min_rad[i]
 
-    hand_pos.update({'rh_WRJ2': this_joints[0],  'rh_WRJ1': this_joints[1]})
-    hand_pos.update({'rh_FFJ4': this_joints[2],  'rh_FFJ3': this_joints[3],  'rh_FFJ2': this_joints[4],  'rh_FFJ1': this_joints[5]})
-    hand_pos.update({'rh_LFJ5': this_joints[6],  'rh_LFJ4': this_joints[7],  'rh_LFJ3': this_joints[8],  'rh_LFJ2': this_joints[9],  'rh_LFJ1': this_joints[10]})
-    hand_pos.update({'rh_MFJ4': this_joints[11], 'rh_MFJ3': this_joints[12], 'rh_MFJ2': this_joints[13], 'rh_MFJ1': this_joints[14]})
-    hand_pos.update({'rh_RFJ4': this_joints[15], 'rh_RFJ3': this_joints[16], 'rh_RFJ2': this_joints[17], 'rh_RFJ1': this_joints[18]})
-    hand_pos.update({'rh_THJ5': this_joints[19], 'rh_THJ4': this_joints[20], 'rh_THJ3': this_joints[21], 'rh_THJ2': this_joints[22], 'rh_THJ1': this_joints[23]})
+        # Send joints command for Shadow Hand
+        hand_pos = hand_commander.get_joints_position()
 
-    hand_commander.move_to_joint_value_target_unsafe(joint_states=hand_pos, time=0.3, wait=True, angle_degrees=False)
+        hand_pos.update({'rh_WRJ2': this_joints[0],  'rh_WRJ1': this_joints[1]})
+        hand_pos.update({'rh_FFJ4': this_joints[2],  'rh_FFJ3': this_joints[3],  'rh_FFJ2': this_joints[4],  'rh_FFJ1': this_joints[5]})
+        hand_pos.update({'rh_LFJ5': this_joints[6],  'rh_LFJ4': this_joints[7],  'rh_LFJ3': this_joints[8],  'rh_LFJ2': this_joints[9],  'rh_LFJ1': this_joints[10]})
+        hand_pos.update({'rh_MFJ4': this_joints[11], 'rh_MFJ3': this_joints[12], 'rh_MFJ2': this_joints[13], 'rh_MFJ1': this_joints[14]})
+        hand_pos.update({'rh_RFJ4': this_joints[15], 'rh_RFJ3': this_joints[16], 'rh_RFJ2': this_joints[17], 'rh_RFJ1': this_joints[18]})
+        hand_pos.update({'rh_THJ5': this_joints[19], 'rh_THJ4': this_joints[20], 'rh_THJ3': this_joints[21], 'rh_THJ2': this_joints[22], 'rh_THJ1': this_joints[23]})
 
-    print('\n' + colored('Command sent to Shadow Hand!', 'green') + '\n') 
+        hand_commander.move_to_joint_value_target_unsafe(joint_states=hand_pos, time=0.3, wait=True, angle_degrees=False)
+
+        print('\n' + colored('Command sent to Shadow Hand!', 'green') + '\n') 
     
 
 if __name__ == "__main__":

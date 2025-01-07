@@ -102,6 +102,9 @@ def run_mediapipe_2d(image, mpHands, mpDetector, mpDrawing):
     keypoints = []
     # Extract Mediapipe Hand Keypoints
     if results.multi_hand_landmarks:
+        hand_side = results.multi_handedness[0].classification[0].label
+        if hand_side == 'Right': # Right is the new left
+            return None, image
         for hand_landmarks in results.multi_hand_landmarks:
             for landmark in hand_landmarks.landmark:
                 keypoints.append(Point(x=landmark.x, 
@@ -132,6 +135,9 @@ def run_mediapipe_stereo(image, mpHands, mpDetector, mpDrawing):
     keypoints = []
     # Extract Mediapipe Hand Keypoints
     if results.multi_hand_landmarks:
+        hand_side = results.multi_handedness[0].classification[0].label
+        if hand_side == 'Right': # Right is the new left
+            return None, image
         for hand_landmarks in results.multi_hand_landmarks:
             for landmark in hand_landmarks.landmark:
                 keypoints.append(Point(x=landmark.x*width, 
