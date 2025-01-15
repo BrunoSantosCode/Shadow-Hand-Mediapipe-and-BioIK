@@ -4,7 +4,7 @@ This repository contains the code developed in order to teleoperate a Shadow Dex
 
 ## 📌 Project Overview
 
-The main purpose of this project is to teleoperate an anthropomorphic robotic hand without the need to resort to extremely expensive equipment, such as kinematic data gloves. To this end, a modular system based on the MediaPipe acquisition algorithm and the BioIK kinematic retargeting algorithm was developed and integrated. 
+The main purpose of this project is to teleoperate an anthropomorphic robotic hand without the need to resort to extremely expensive equipment, such as kinematic data gloves. To this end, a modular system based on the [MediaPipe](https://github.com/google-ai-edge/mediapipe) acquisition algorithm and the [BioIK](https://github.com/TAMS-Group/bio_ik) kinematic retargeting algorithm was developed and integrated. 
 MediaPipe is used to acquire the position of the human hand, acquiring a total of 21 keypoints of the hand. BioIK consists of an optimisation algorithm used to map the acquired keypoints to the robotic hand, providing the angles for each one of the joints.
 This repository provides the necessaary code to achieve the teleoperation using **C++**, **Python** and the **Robotic Operating System (ROS)**.
 
