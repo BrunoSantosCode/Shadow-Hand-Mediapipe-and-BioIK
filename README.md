@@ -50,20 +50,20 @@ This repository provides the necessaary code to achieve the teleoperation using 
 
 5. Open Camera container
 
-6. In `Camera` container run `webcam_cpp.cpp` OR `zed_cpp.cpp`
+6. In `Camera` container run `webcam_cpp.cpp` **OR** `zed_cpp.cpp`
     ```bash
       roslaunch image webcam_cpp.launch
     ```
-    OR
+    **OR**
     ```bash
       roslaunch image zed_cpp.launch
     ```
     
-8. In `Camera`, open a new tab and run `command_shadow.py`
+8. In `Camera`, open a new tab and run `mediapipe_2d.py` **OR** `mediapipe_stereo.py`
     ```bash
       roslaunch mediapipe mediapipe_2d.launch
     ```
-    OR
+    **OR**
     ```bash
       roslaunch mediapipe mediapipe_stereo.launch
     ```
